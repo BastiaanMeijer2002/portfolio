@@ -9,7 +9,6 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\Persistence\ManagerRegistry;
-use Symfony\Flex\Response;
 
 
 #[Route('/portfolio', name: 'app_portfolio')]
@@ -45,6 +44,21 @@ class PortfolioController extends AbstractController
 
         return $this->json(['Element added successfully!']);
 
+
+    }
+
+    #[Route('/delete/{id}', name: '_delete')]
+    public function removeElement($id): JsonResponse
+    {
+        $element = $this->repository->find($id);
+
+        if ($element == null){
+            return $this->json("Desired element was not found!");
+        }
+
+        $this->repository->remove($element, true);
+
+        return $this->json('Element '.$element->getTitle().' successfully removed!');
 
     }
 
