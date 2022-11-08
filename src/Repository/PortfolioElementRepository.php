@@ -39,6 +39,10 @@ class PortfolioElementRepository extends ServiceEntityRepository
         }
     }
 
+    public function getAllElements(): array
+    {
+        return $this->findAll();
+    }
 //    /**
 //     * @return PortfolioElement[] Returns an array of PortfolioElement objects
 //     */
