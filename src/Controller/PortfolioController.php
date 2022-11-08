@@ -62,6 +62,36 @@ class PortfolioController extends AbstractController
 
     }
 
+    #[Route('/update', name: '_update', methods: ['POST'])]
+    public function updateElement(Request $request): JsonResponse
+    {
+        $entityManager = $this->doctrine->getManager();
+        $payload = json_decode($request->getContent(), true);
+
+        if ($payload == null){
+            return $this->json("There is nothing to update!");
+        }
+
+        $element = $this->repository->find($payload['id']);
+
+        if ($element == null){
+            return $this->json("Desired element is not found!");
+        }
+
+        if ($payload['title']){
+            $element->setTitle($payload['title']);
+            $entityManager->flush();
+        }
+
+        if ($payload['desc']){
+            $element->setDescription($payload['desc']);
+            $entityManager->flush();
+        }
+
+        return $this->json(["Element updated successfully!"]);
+
+    }
+
     #[Route('/get-all', name: '_get-all')]
     public function getAll(ManagerRegistry $doctrine): JsonResponse
     {
