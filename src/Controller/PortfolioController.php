@@ -9,6 +9,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Annotation\Route;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Flex\Response;
 
 
 #[Route('/portfolio', name: 'app_portfolio')]
@@ -24,25 +25,37 @@ class PortfolioController extends AbstractController
         $this->repository = $doctrine->getRepository(PortfolioElement::class);
     }
 
-    #[Route('/add', name: '_add')]
+    #[Route('/add', name: '_add', methods: ['POST'])]
     public function addElement(Request $request): JsonResponse
     {
         $entityManager = $this->doctrine->getManager();
-//        $payload = json_decode($request->getContent());
+        $payload = json_decode($request->getContent(), true);
+
+        if ($payload == null || $payload['title'] == null || $payload['desc'] == null){
+            return $this->json('Invalid input.');
+        }
+
         $element = new PortfolioElement();
-        $element->setDescription('This is a test element!');
-        $element->setTitle('Test');
+        $element->setDescription($payload['desc']);
+        $element->setTitle($payload['title']);
         $element->setTimestamp(new \DateTime());
 
         $entityManager->persist($element);
         $entityManager->flush();
 
         return $this->json(['Element added successfully!']);
+
+
     }
 
     #[Route('/get-all', name: '_get-all')]
-    public function index(): JsonResponse
+    public function getAll(ManagerRegistry $doctrine): JsonResponse
     {
-        return $this->json($this->repository->findAll());
+        $repository = $doctrine->getRepository(PortfolioElement::class);
+        $data = [];
+        foreach ($repository->findAll() as $item){
+            $data[] = [$item->getTitle(), $item->getDescription(), $item->getTimestamp()];
+        }
+        return $this->json($data);
     }
 }
