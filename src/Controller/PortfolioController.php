@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\PortfolioElement;
+use App\Entity\Tag;
 use Doctrine\Persistence\ObjectRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -17,11 +18,13 @@ class PortfolioController extends AbstractController
 
     private ObjectRepository $repository;
     private ManagerRegistry $doctrine;
+    private ObjectRepository $tagRepository;
 
     public function __construct(ManagerRegistry $doctrine)
     {
         $this->doctrine = $doctrine;
         $this->repository = $doctrine->getRepository(PortfolioElement::class);
+        $this->tagRepository = $doctrine->getRepository(Tag::class);
     }
 
     #[Route('/add', name: '_add', methods: ['POST'])]
@@ -30,7 +33,7 @@ class PortfolioController extends AbstractController
         $entityManager = $this->doctrine->getManager();
         $payload = json_decode($request->getContent(), true);
 
-        if ($payload == null || $payload['title'] == null || $payload['desc'] == null){
+        if ($payload == null || $payload['title'] == null || $payload['desc'] == null || $payload['tags'] == null){
             return $this->json('Invalid input.');
         }
 
@@ -39,11 +42,23 @@ class PortfolioController extends AbstractController
         $element->setTitle($payload['title']);
         $element->setTimestamp(new \DateTime());
 
+        foreach ($payload['tags'] as $tag){
+            $temp = $this->tagRepository->findOneBy(['Name'=>$tag]);
+
+            if ($temp){
+                $element->addTag($temp);
+            } else {
+                $newTag = new Tag();
+                $newTag->setName($tag);
+                $entityManager->persist($newTag);
+                $element->addTag($newTag);
+            }
+        }
+
         $entityManager->persist($element);
         $entityManager->flush();
 
         return $this->json(['Element added successfully!']);
-
 
     }
 

@@ -39,6 +39,13 @@ class TagRepository extends ServiceEntityRepository
         }
     }
 
+
+
+    public function findTagByName(String $name): Tag
+    {
+        return $this->findOneBy(['name' => $name]);
+    }
+
 //    /**
 //     * @return Tag[] Returns an array of Tag objects
 //     */
