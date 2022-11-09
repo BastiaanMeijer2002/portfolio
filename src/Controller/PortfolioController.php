@@ -83,25 +83,42 @@ class PortfolioController extends AbstractController
         $entityManager = $this->doctrine->getManager();
         $payload = json_decode($request->getContent(), true);
 
-        if ($payload == null){
+        if ($payload == null) {
             return $this->json("There is nothing to update!");
         }
 
         $element = $this->repository->find($payload['id']);
 
-        if ($element == null){
+        if ($element == null) {
             return $this->json("Desired element is not found!");
         }
 
-        if ($payload['title']){
+        if (isset($payload['title'])) {
             $element->setTitle($payload['title']);
             $entityManager->flush();
         }
 
-        if ($payload['desc']){
+        if (isset($payload['desc'])) {
             $element->setDescription($payload['desc']);
             $entityManager->flush();
         }
+
+        if (isset($payload['tags'])) {
+            foreach ($payload['tags'] as $tag) {
+                $temp = $this->tagRepository->findOneBy(['Name' => $tag]);
+
+                if ($temp) {
+                    $element->addTag($temp);
+                } else {
+                    $newTag = new Tag();
+                    $newTag->setName($tag);
+                    $entityManager->persist($newTag);
+                    $element->addTag($newTag);
+                }
+            }
+            $entityManager->flush();
+        }
+
 
         return $this->json(["Element updated successfully!"]);
 
