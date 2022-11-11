@@ -89,4 +89,14 @@ class TagController extends AbstractController
 
     }
 
+    #[Route('/get-all', name: '_get-all')]
+    public function getAll(): JsonResponse
+    {
+        $data = [];
+        foreach ($this->repository->findAll() as $item){
+            $data[] = [$item->getTitle(), $item->getDescription(), $item->getTimestamp()];
+        }
+        return $this->json($data);
+    }
+
 }

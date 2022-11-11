@@ -4,6 +4,8 @@ namespace App\Controller;
 
 use App\Entity\PortfolioElement;
 use App\Entity\Tag;
+use App\Repository\PortfolioElementRepository;
+use Doctrine\DBAL\Exception;
 use Doctrine\Persistence\ObjectRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -132,6 +134,23 @@ class PortfolioController extends AbstractController
         foreach ($repository->findAll() as $item){
             $data[] = [$item->getTitle(), $item->getDescription(), $item->getTimestamp()];
         }
+        return $this->json($data);
+    }
+
+    /**
+     * @throws Exception
+     */
+    #[Route('/get-by-tags', name: '_by_tags', methods: ['POST'])]
+    public function getElementsByTags(Request $request, PortfolioElementRepository $repo): JsonResponse
+    {
+        $payload = json_decode($request->getContent(), true);
+
+        if ($payload == null && $payload['tags'] == null){
+            return $this->json("Invalid input");
+        }
+
+        $data = $repo->findByTags($payload['tags'], 0);
+
         return $this->json($data);
     }
 }

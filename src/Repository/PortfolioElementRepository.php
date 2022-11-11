@@ -3,7 +3,9 @@
 namespace App\Repository;
 
 use App\Entity\PortfolioElement;
+use App\Entity\Tag;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
@@ -42,6 +44,47 @@ class PortfolioElementRepository extends ServiceEntityRepository
     public function getAllElements(): array
     {
         return $this->findAll();
+    }
+
+    /**
+     * @throws \Doctrine\DBAL\Exception
+     */
+    public function findByTags(Array $tags, int $accuracy): array
+    {
+        $tagRepo = $this->getEntityManager()->getRepository(Tag::class);
+        $conn = $this->getEntityManager()->getConnection();
+
+        if ($accuracy == 1){
+            $operator = 'and ';
+        } else {
+            $operator = 'or ';
+        }
+
+        $query = '
+            select distinct p.id, p.title, p.description, p.timestamp 
+            from portfolio_element p
+            join portfolio_element_tag pet on p.id = pet.portfolio_element_id
+            join tag t on t.id = pet.tag_id
+            ';
+
+        for ($i = 0; $i<count($tags); $i++)  {
+            $tag = $tagRepo->findOneBy(['Name' => $tags[$i]]);
+
+            if ($tag == null) {
+                continue;
+            }
+
+            if ($i == 0){
+                $query .= 'where t.name = "'. $tag->getName().'"';
+            } else {
+                $query .= ' '.$operator.' t.name = "'. $tag->getName().'"';
+            }
+        }
+
+        $stmt = $conn->prepare($query);
+        $results = $stmt->executeQuery();
+
+        return $results->fetchAllAssociative();
     }
 //    /**
 //     * @return PortfolioElement[] Returns an array of PortfolioElement objects
