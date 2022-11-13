@@ -153,4 +153,22 @@ class PortfolioController extends AbstractController
 
         return $this->json($data);
     }
+
+    #[Route('/tags/{id}/{name}', name: '_tags', methods: ['GET'])]
+    public function getTags(int $id, PortfolioElementRepository $repo, $name = false): JsonResponse
+    {
+        $element = $repo->find($id);
+
+        $data = [];
+
+        foreach ($element->getTags()->toArray() as $item){
+            if ($name){
+                $data[] = $item->getName();
+            } else {
+                $data[] = $item->getId();
+            }
+        }
+
+        return $this->json($data);
+    }
 }
